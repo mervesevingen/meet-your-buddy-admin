@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 40px;
+      color: #111;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    select {
+      padding: 8px 12px;
+      margin-bottom: 20px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border: 1px solid #e5e7eb;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f3f4f6;
+      font-weight: 600;
+    }
+
+    tr:hover {
+      background: #f9fafb;
+    }
+
+    .section {
+      margin-top: 40px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Admin Panel</h1>
+
+  <select id="teamFilter" onchange="loadData()">
+    <option value="">All Teams</option>
+  </select>
+
+  <div class="section">
+    <h3>Assignments</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Candidate</th>
+          <th>Team</th>
+        </tr>
+      </thead>
+      <tbody id="assignedTable"></tbody>
+    </table>
+  </div>
+
+  <div class="section">
+    <h3>Unassigned Candidates</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Team</th>
+        </tr>
+      </thead>
+      <tbody id="unassignedTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://rvftmucgupbwpberiwdq.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_Sb3JnoHFT2bCzq12ZzeNcQ_UPPVXrQ6";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function loadTeams() {
+      const { data } = await client
+        .from("candidates")
+        .select("team");
+
+      const teams = [...new Set(data.map(d => d.team))];
+
+      const select = document.getElementById("teamFilter");
+
+      teams.forEach(team => {
+        const option = document.createElement("option");
+        option.value = team;
+        option.textContent = team;
+        select.appendChild(option);
+      });
+    }
+
+    async function loadData() {
+      const team = document.getElementById("teamFilter").value;
+
+      let query = client.from("candidates").select("*");
+
+      if (team) {
+        query = query.eq("team", team);
+      }
+
+      const { data } = await query;
+
+      const assignedTable = document.getElementById("assignedTable");
+      const unassignedTable = document.getElementById("unassignedTable");
+
+      assignedTable.innerHTML = "";
+      unassignedTable.innerHTML = "";
+
+      data.forEach(row => {
+        if (row.assigned_to) {
+          assignedTable.innerHTML += `
+            <tr>
+              <td>${row.assigned_to}</td>
+              <td>${row.name}</td>
+              <td>${row.team}</td>
+            </tr>
+          `;
+        } else {
+          unassignedTable.innerHTML += `
+            <tr>
+              <td>${row.name}</td>
+              <td>${row.team}</td>
+            </tr>
+          `;
+        }
+      });
+    }
+
+    loadTeams();
+    loadData();
+  </script>
+
+</body>
+</html>
