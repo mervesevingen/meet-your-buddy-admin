@@ -19,11 +19,25 @@
       margin-bottom: 20px;
     }
 
-    select {
+    input, select {
       padding: 8px 12px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       border-radius: 6px;
       border: 1px solid #ddd;
+    }
+
+    button {
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      background: #4959ea;
+      color: white;
+      margin-right: 10px;
+    }
+
+    .danger {
+      background: #dc2626;
     }
 
     table {
@@ -31,6 +45,7 @@
       border-collapse: collapse;
       background: white;
       border: 1px solid #e5e7eb;
+      margin-top: 10px;
     }
 
     th, td {
@@ -52,49 +67,90 @@
     .section {
       margin-top: 40px;
     }
+
+    .login {
+      max-width: 300px;
+      margin: 100px auto;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 
 <body>
 
-  <h1>Admin Panel</h1>
-
-  <select id="teamFilter" onchange="loadData()">
-    <option value="">All Teams</option>
-  </select>
-
-  <div class="section">
-    <h3>Assignments</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Employee</th>
-          <th>Candidate</th>
-          <th>Team</th>
-        </tr>
-      </thead>
-      <tbody id="assignedTable"></tbody>
-    </table>
+  <!-- LOGIN -->
+  <div id="loginView" class="login">
+    <h2>Admin Login</h2>
+    <input type="password" id="password" placeholder="Enter password" />
+    <br><br>
+    <button onclick="login()">Enter</button>
   </div>
 
-  <div class="section">
-    <h3>Unassigned Candidates</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Team</th>
-        </tr>
-      </thead>
-      <tbody id="unassignedTable"></tbody>
-    </table>
+  <!-- ADMIN PANEL -->
+  <div id="adminView" class="hidden">
+
+    <h1>Admin Panel</h1>
+
+    <button class="danger" onclick="resetDraw()">Reset Draw</button>
+
+    <br><br>
+
+    <select id="teamFilter" onchange="loadData()">
+      <option value="">All Teams</option>
+    </select>
+
+    <div class="section">
+      <h3>Assignments</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Candidate</th>
+            <th>Team</th>
+          </tr>
+        </thead>
+        <tbody id="assignedTable"></tbody>
+      </table>
+    </div>
+
+    <div class="section">
+      <h3>Unassigned Candidates</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Team</th>
+          </tr>
+        </thead>
+        <tbody id="unassignedTable"></tbody>
+      </table>
+    </div>
+
   </div>
 
   <script>
     const SUPABASE_URL = "https://rvftmucgupbwpberiwdq.supabase.co";
-    const SUPABASE_KEY = "sb_publishable_Sb3JnoHFT2bCzq12ZzeNcQ_UPPVXrQ6";
+    const SUPABASE_KEY = "YOUR_KEY";
 
     const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // 🔐 LOGIN
+    function login() {
+      const pass = document.getElementById("password").value;
+
+      if (pass === "123") {
+        document.getElementById("loginView").style.display = "none";
+        document.getElementById("adminView").style.display = "block";
+        loadTeams();
+        loadData();
+      } else {
+        alert("Wrong password");
+      }
+    }
 
     async function loadTeams() {
       const { data } = await client
@@ -150,8 +206,22 @@
       });
     }
 
-    loadTeams();
-    loadData();
+    // 🔄 RESET
+    async function resetDraw() {
+      const confirmReset = confirm("Are you sure you want to reset all assignments?");
+
+      if (!confirmReset) return;
+
+      const { error } = await client.rpc("reset_draw");
+
+      if (error) {
+        alert("Error: " + error.message);
+        return;
+      }
+
+      alert("All assignments have been reset.");
+      loadData();
+    }
   </script>
 
 </body>
